@@ -12,7 +12,7 @@ public class HrmApplication {
     public static void main(String[] args) {
         EmployeeRepository employeeRepository = new EmployeeRepository();
         employeeRepository.save(
-                new Employee(1L, "Sasha", "dev", BigDecimal.TEN, LocalDate.now())
+                new Employee(1L, "Arina", "dev", BigDecimal.TEN, LocalDate.now())
         );
         HRMService service = new HRMService(employeeRepository);
         Menu menu = new Menu(service);
