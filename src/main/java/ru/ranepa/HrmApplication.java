@@ -1,25 +1,23 @@
 package ru.ranepa;
 
-import ru.ranepa.model.Employee;
 import ru.ranepa.presentation.Menu;
 import ru.ranepa.repository.EmployeeRepository;
 import ru.ranepa.service.HRMService;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 public class HrmApplication {
     public static void main(String[] args) {
-        EmployeeRepository employeeRepository = new EmployeeRepository();
-        employeeRepository.save(
-                new Employee(1L, "Arina", "dev", BigDecimal.TEN, LocalDate.now())
-        );
-        HRMService service = new HRMService(employeeRepository);
+        //кодировка вывода UTF-8
+        PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        System.setOut(out);
+
+        //инициализация слоев приложения
+        EmployeeRepository repository = new EmployeeRepository();
+        HRMService service = new HRMService(repository);
         Menu menu = new Menu(service);
-        try {
-            menu.showMenu();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+        //запуск меню
+        menu.start();
     }
 }

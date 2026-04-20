@@ -1,36 +1,46 @@
 package ru.ranepa.repository;
 
 import ru.ranepa.model.Employee;
-import java.util.HashMap;
-import java.util.List;
+
+import java.util.*;
 
 public class EmployeeRepository {
-    private HashMap<Long, Employee> employees = new HashMap<>();
+    private Map<Long, Employee> employees = new HashMap<>();
+    private Long nextId = 1L;  // Генератор ID
 
-    public boolean save (Employee employee) {
-        long id = employee.getId();
-        employees.put(id, employee);
-        return false;
+    //сохранение нового сотрудника (генерируем ID автоматически)
+    public Employee save(Employee employee) {
+        // Если у сотрудника нет ID, присваиваем новый
+        if (employee.getId() == null) {
+            employee.setId(nextId++);
+        }
+        employees.put(employee.getId(), employee);
+        return employee;
     }
 
+    //получение всех сотрудников
     public List<Employee> findAll() {
-        return employees.values()
-                .stream()
-                .toList();
+        return new ArrayList<>(employees.values());
     }
 
-    public Employee findById(long id) {
-        if (!employees.containsKey(id)){
-            throw new IllegalArgumentException("Такого сотрудника нет");
-        }
-        return employees.get(id);
+    //поиск по ID (возвращаем Optional, чтобы не было null)
+    public Optional<Employee> findById(Long id) {
+        return Optional.ofNullable(employees.get(id));
     }
+
+    //удаление по ID
     public boolean delete(Long id) {
-        if (!employees.containsKey(id)) {
-            System.out.println("Такого сотрудника нет");
-            return false;
-        }
-        employees.remove(id);
-        return true;
+        return employees.remove(id) != null;
+    }
+
+    //проверка существования сотрудника
+    public boolean existsById(Long id) {
+        return employees.containsKey(id);
+    }
+
+    //очистка всех данных (нужно для тестов)
+    public void clear() {
+        employees.clear();
+        nextId = 1L;
     }
 }
