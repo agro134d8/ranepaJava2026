@@ -2,61 +2,64 @@ package ru.ranepa.service;
 
 import ru.ranepa.model.Employee;
 import ru.ranepa.repository.EmployeeRepository;
-
-import java.util.Comparator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+@Service
 public class HRMService {
-    private EmployeeRepository repository;
 
+    private final EmployeeRepository repository;
+
+    @Autowired  // Внедрение зависимости через конструктор
     public HRMService(EmployeeRepository repository) {
         this.repository = repository;
     }
 
-    // Получение всех сотрудников (возвращаем список)
     public List<Employee> getAllEmployees() {
         return repository.findAll();
     }
 
-    // Поиск сотрудника по ID
-    public Optional<Employee> findEmployeeById(Long id) {
-        return repository.findById(id);
+    public Employee findEmployeeById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Сотрудник не найден с ID: " + id));
     }
 
-    // Добавление нового сотрудника
-    public Employee addEmployee(String name, String position, double salary, java.time.LocalDate hireDate) {
-        Employee employee = new Employee(name, position, salary, hireDate);
+    public Employee addEmployee(Employee employee) {
         return repository.save(employee);
     }
 
-    // Удаление сотрудника
     public boolean deleteEmployee(Long id) {
-        return repository.delete(id);
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
-    // Расчет средней зарплаты (возвращаем 0, если сотрудников нет)
-    public double getAverageSalary() {
-        return repository.findAll()
-                .stream()
-                .mapToDouble(Employee::getSalary)
-                .average()
-                .orElse(0.0);
+    public BigDecimal getAverageSalary() {
+        return repository.findAll().stream()
+                .map(Employee::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(Math.max(1, repository.count())), 2, BigDecimal.ROUND_HALF_UP);
     }
 
-    // Поиск самого высокооплачиваемого сотрудника
-    public Optional<Employee> getTopSalaryEmployee() {
-        return repository.findAll()
-                .stream()
-                .max(Comparator.comparingDouble(Employee::getSalary));
+    public Employee getTopSalaryEmployee() {
+        return repository.findAll().stream()
+                .max((e1, e2) -> e1.getSalary().compareTo(e2.getSalary()))
+                .orElse(null);
     }
 
-    // Фильтрация сотрудников по должности
     public List<Employee> getEmployeesByPosition(String position) {
-        return repository.findAll()
-                .stream()
-                .filter(e -> e.getPosition().equalsIgnoreCase(position))
-                .collect(Collectors.toList());
+        return repository.findByPosition(position);
+    }
+
+    public List<Employee> getEmployeesBySalaryGreaterThan(BigDecimal salary) {
+        return repository.findBySalaryGreaterThanEqual(salary);
+    }
+
+    public long getTotalEmployees() {
+        return repository.count();
     }
 }
